@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "417912915872",
+    "project_id": "zen-mart-pro-50ab1",
+    "storage_bucket": "zen-mart-pro-50ab1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:417912915872:android:7f2cf4daf964758c7c86c5",
+        "android_client_info": {
+          "package_name": "com.company.zenmartpro"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCLjNjD-EGoQLe5fxIHH-Khr9ODbrdtKTk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:417912915872:android:70615ff1568aa6dc7c86c5",
+        "android_client_info": {
+          "package_name": "com.example.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCLjNjD-EGoQLe5fxIHH-Khr9ODbrdtKTk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
