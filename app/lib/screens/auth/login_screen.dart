@@ -1,4 +1,4 @@
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth/firebase_auth.dart'; // Fixed missing import
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/auth_providers.dart';
@@ -15,6 +15,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   late TextEditingController _emailController;
   late TextEditingController _passwordController;
   bool _isLoading = false;
+  bool _obscurePassword = true;
   String? _errorMessage;
 
   @override
@@ -32,7 +33,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Future<void> _handleLogin() async {
-    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+    if (_emailController.text.trim().isEmpty || _passwordController.text.isEmpty) {
       setState(() => _errorMessage = 'Please fill in all fields');
       return;
     }
@@ -49,11 +50,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         password: _passwordController.text,
       );
     } on FirebaseAuthException catch (e) {
-      setState(() {
-        _errorMessage = e.message ?? 'Authentication failed';
-      });
+      if (mounted) {
+        setState(() {
+          _errorMessage = e.message ?? 'Authentication failed';
+        });
+      }
     } catch (e) {
-      setState(() => _errorMessage = 'An error occurred: $e');
+      if (mounted) {
+        setState(() => _errorMessage = 'An error occurred: $e');
+      }
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -70,11 +75,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              SizedBox(height: MediaQuery.of(context).size.height * 0.1),
-              
-              // Logo/Title
+              SizedBox(height: MediaQuery.of(context).size.height * 0.08),
+
+              // Title
               const Text(
-                'Dashboard',
+                'Zen Mart Pro',
                 style: TextStyle(
                   fontSize: 32,
                   fontWeight: FontWeight.bold,
@@ -89,7 +94,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   color: Colors.grey,
                 ),
               ),
-              const SizedBox(height: 48),
+              const SizedBox(height: 40),
 
               // Email Field
               TextField(
@@ -112,9 +117,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               // Password Field
               TextField(
                 controller: _passwordController,
+                obscureText: _obscurePassword,
                 decoration: InputDecoration(
                   hintText: 'Password',
                   prefixIcon: const Icon(Icons.lock),
+                  suffixIcon: IconButton(
+                    icon: Icon(_obscurePassword ? Icons.visibility : Icons.visibility_off),
+                    onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                  ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -123,15 +133,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     vertical: 16,
                   ),
                 ),
-                obscureText: true,
               ),
               const SizedBox(height: 24),
 
-              // Error Message
+              // Error Display Box
               if (_errorMessage != null)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 16),
                   child: Container(
+                    width: double.infinity,
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: Colors.red.shade100,
@@ -144,7 +154,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                 ),
 
-              // Login Button
+              // Sign In Button
               SizedBox(
                 width: double.infinity,
                 height: 56,
@@ -196,6 +206,28 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         color: Color(0xFF1E88E5),
                         fontWeight: FontWeight.w600,
                       ),
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 40),
+
+              // Zenvyro Labs Branding
+              const Column(
+                children: [
+                  Text(
+                    'Powered by',
+                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    'Zenvyro Labs',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1E88E5),
+                      letterSpacing: 0.5,
                     ),
                   ),
                 ],

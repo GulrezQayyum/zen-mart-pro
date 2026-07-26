@@ -1,4 +1,9 @@
-enum UserRole { admin, vendor, user }
+enum UserRole {
+  admin,
+  vendor,
+  user,
+  rider,
+}
 
 extension UserRoleExtension on UserRole {
   String get value {
@@ -9,6 +14,8 @@ extension UserRoleExtension on UserRole {
         return 'vendor';
       case UserRole.user:
         return 'user';
+      case UserRole.rider:
+        return 'rider';
     }
   }
 
@@ -18,6 +25,8 @@ extension UserRoleExtension on UserRole {
         return UserRole.admin;
       case 'vendor':
         return UserRole.vendor;
+      case 'rider':
+        return UserRole.rider;
       default:
         return UserRole.user;
     }
@@ -32,6 +41,7 @@ class AppUser {
   final String? photoURL;
   final DateTime createdAt;
   final String status;
+  final String? shopId;
 
   AppUser({
     required this.uid,
@@ -41,6 +51,7 @@ class AppUser {
     this.photoURL,
     required this.createdAt,
     this.status = 'active',
+    this.shopId,
   });
 
   AppUser copyWith({
@@ -51,6 +62,7 @@ class AppUser {
     String? photoURL,
     DateTime? createdAt,
     String? status,
+    String? shopId,
   }) {
     return AppUser(
       uid: uid ?? this.uid,
@@ -60,6 +72,7 @@ class AppUser {
       photoURL: photoURL ?? this.photoURL,
       createdAt: createdAt ?? this.createdAt,
       status: status ?? this.status,
+      shopId: shopId ?? this.shopId,
     );
   }
 
@@ -72,6 +85,7 @@ class AppUser {
       'photoURL': photoURL,
       'createdAt': createdAt.toIso8601String(),
       'status': status,
+      'shopId': shopId,
     };
   }
 
@@ -86,6 +100,7 @@ class AppUser {
           ? DateTime.parse(json['createdAt'])
           : DateTime.now(),
       status: json['status'] ?? 'active',
+      shopId: json['shopId'],
     );
   }
 }
