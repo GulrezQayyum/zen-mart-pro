@@ -1,3 +1,4 @@
+// lib/screens/auth/signup_screen.dart
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -73,8 +74,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
 
     try {
       final authService = ref.read(authServiceProvider);
-      
-      // Execute registration with Riverpod Auth Service
+
       await authService.signUp(
         email: _emailController.text.trim(),
         password: _passwordController.text,
@@ -82,13 +82,10 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
         role: _selectedRole,
       );
 
-      final uid = FirebaseAuth.instance.currentUser?.uid;
-
-      if (uid != null && mounted) {
+      if (mounted) {
         _showSnackBar('Account created successfully!', Colors.green);
-        _navigateBasedOnRole(_selectedRole.name);
-      } else if (mounted) {
-        Navigator.of(context).pop();
+        // Pop back to the root (AuthGate) – it will now show HomeScreen
+        Navigator.of(context).popUntil((route) => route.isFirst);
       }
     } on FirebaseAuthException catch (e) {
       _showSnackBar(e.message ?? 'Sign up failed', Colors.red);
@@ -108,33 +105,6 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
         backgroundColor: color,
         duration: const Duration(seconds: 3),
       ),
-    );
-  }
-
-  void _navigateBasedOnRole(String role) {
-    Widget targetDashboard;
-
-    switch (role.toLowerCase()) {
-      case 'admin':
-      case 'super_admin':
-        targetDashboard = const Scaffold(body: Center(child: Text("Super Admin Dashboard")));
-        break;
-      case 'vendor':
-        targetDashboard = const Scaffold(body: Center(child: Text("Vendor Dashboard")));
-        break;
-      case 'rider':
-        targetDashboard = const Scaffold(body: Center(child: Text("Rider Dashboard")));
-        break;
-      case 'user':
-      case 'customer':
-      default:
-        targetDashboard = const Scaffold(body: Center(child: Text("Customer Home Screen")));
-        break;
-    }
-
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (context) => targetDashboard),
-      (Route<dynamic> route) => false,
     );
   }
 
@@ -191,7 +161,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
             ),
             const SizedBox(height: 16),
 
-            // Role Selection
+            // ✅ Role Selection – includes all four roles
             DropdownButtonFormField<UserRole>(
               value: _selectedRole,
               decoration: const InputDecoration(
@@ -207,6 +177,14 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                 DropdownMenuItem(
                   value: UserRole.vendor,
                   child: Text('Vendor'),
+                ),
+                DropdownMenuItem(
+                  value: UserRole.rider,
+                  child: Text('Rider'),
+                ),
+                DropdownMenuItem(
+                  value: UserRole.admin,
+                  child: Text('Admin'),
                 ),
               ],
               onChanged: (value) {
@@ -226,8 +204,11 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                 border: const OutlineInputBorder(),
                 prefixIcon: const Icon(Icons.lock),
                 suffixIcon: IconButton(
-                  icon: Icon(_obscurePassword ? Icons.visibility : Icons.visibility_off),
-                  onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                  icon: Icon(
+                    _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                  ),
+                  onPressed: () =>
+                      setState(() => _obscurePassword = !_obscurePassword),
                 ),
               ),
             ),
@@ -242,8 +223,13 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                 border: const OutlineInputBorder(),
                 prefixIcon: const Icon(Icons.lock),
                 suffixIcon: IconButton(
-                  icon: Icon(_obscureConfirmPassword ? Icons.visibility : Icons.visibility_off),
-                  onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
+                  icon: Icon(
+                    _obscureConfirmPassword
+                        ? Icons.visibility
+                        : Icons.visibility_off,
+                  ),
+                  onPressed: () => setState(
+                      () => _obscureConfirmPassword = !_obscureConfirmPassword),
                 ),
               ),
             ),
@@ -262,11 +248,18 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                     ? const SizedBox(
                         height: 24,
                         width: 24,
-                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
                       )
                     : const Text(
                         'Create Account',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
                       ),
               ),
             ),

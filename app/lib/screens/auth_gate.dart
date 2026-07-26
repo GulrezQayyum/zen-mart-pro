@@ -4,41 +4,31 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_providers.dart';
 import '../models/user_model.dart';
 import './auth/login_screen.dart';
-import './admin/admin_dashboard_screen.dart';
-import './vendor/vendor_dashboard_screen.dart';
-import './customer/customer_home.dart';
-import './rider/rider_dashboard.dart';
+
+// Import your dashboards
+import './admin/admin_dashboard_screen.dart';   // AdminDashboardScreen
+import './vendor/vendor_dashboard_screen.dart'; // VendorDashboardScreen
+import './customer/customer_home.dart';         // CustomerHome
+import './rider/rider_dashboard.dart';          // RiderDashboard
 
 class AuthGate extends ConsumerWidget {
   const AuthGate({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // 1. Watch auth state (stream of Firebase User?)
     final authState = ref.watch(authStateProvider);
 
     return authState.when(
       data: (firebaseUser) {
-        // If NOT logged in, show Login Screen
         if (firebaseUser == null) {
           return const LoginScreen();
         }
 
-        // 2. Logged in – watch user data from Firestore
         final userDataAsync = ref.watch(currentUserProvider);
 
         return userDataAsync.when(
           loading: () => const Scaffold(
-            body: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 16),
-                  Text('Loading user data...'),
-                ],
-              ),
-            ),
+            body: Center(child: CircularProgressIndicator()),
           ),
           error: (error, stack) => Scaffold(
             body: Center(
@@ -50,9 +40,7 @@ class AuthGate extends ConsumerWidget {
                   Text('Error loading user data: $error'),
                   const SizedBox(height: 16),
                   ElevatedButton(
-                    onPressed: () {
-                      ref.invalidate(currentUserProvider);
-                    },
+                    onPressed: () => ref.invalidate(currentUserProvider),
                     child: const Text('Retry'),
                   ),
                 ],
@@ -60,27 +48,16 @@ class AuthGate extends ConsumerWidget {
             ),
           ),
           data: (appUser) {
-            // If appUser is null (Firestore doc missing), show Login
             if (appUser == null) {
               return const LoginScreen();
             }
-
-            // 3. Route based on user role
+            // 🎯 Directly return the dashboard based on role
             return _buildDashboard(appUser);
           },
         );
       },
       loading: () => const Scaffold(
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              CircularProgressIndicator(),
-              SizedBox(height: 16),
-              Text('Checking authentication...'),
-            ],
-          ),
-        ),
+        body: Center(child: CircularProgressIndicator()),
       ),
       error: (error, stack) => Scaffold(
         body: Center(
@@ -92,9 +69,7 @@ class AuthGate extends ConsumerWidget {
               Text('Auth error: $error'),
               const SizedBox(height: 16),
               ElevatedButton(
-                onPressed: () {
-                  ref.invalidate(authStateProvider);
-                },
+                onPressed: () => ref.invalidate(authStateProvider),
                 child: const Text('Retry'),
               ),
             ],
@@ -107,15 +82,14 @@ class AuthGate extends ConsumerWidget {
   Widget _buildDashboard(AppUser appUser) {
     switch (appUser.role) {
       case UserRole.admin:
-        return const AdminDashboard();
+        return AdminDashboardScreen();
       case UserRole.vendor:
-        return const VendorDashboard();
+        return VendorDashboardScreen();
       case UserRole.user:
-        return const CustomerHome();
+        return CustomerHome();
       case UserRole.rider:
-        return const RiderDashboard();
-      default:
-        return const CustomerHome();
+        return RiderDashboard();
+      // no default needed – switch is exhaustive
     }
   }
 }
