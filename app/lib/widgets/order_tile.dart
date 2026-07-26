@@ -5,6 +5,7 @@ class OrderTile extends StatelessWidget {
   final String customerName;
   final String total;
   final String status;
+  final VoidCallback onTap; // ✅ REQUIRED
 
   const OrderTile({
     Key? key,
@@ -12,42 +13,26 @@ class OrderTile extends StatelessWidget {
     required this.customerName,
     required this.total,
     required this.status,
+    required this.onTap,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(orderId, style: const TextStyle(fontWeight: FontWeight.bold)),
-                Text(customerName, style: const TextStyle(color: Colors.grey)),
-              ],
-            ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(total, style: const TextStyle(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 4),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.orange.shade100,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    status,
-                    style: const TextStyle(fontSize: 12, color: Colors.orange),
-                  ),
-                ),
-              ],
-            ),
-          ],
+    return GestureDetector(
+      onTap: onTap,
+      child: Card(
+        margin: const EdgeInsets.only(bottom: 8),
+        child: ListTile(
+          title: Text('$orderId - $customerName'),
+          subtitle: Text('Total: $total'),
+          trailing: Chip(
+            label: Text(status, style: const TextStyle(fontSize: 12)),
+            backgroundColor: status == 'Pending'
+                ? Colors.orange.shade100
+                : status == 'Delivered'
+                    ? Colors.green.shade100
+                    : Colors.blue.shade100,
+          ),
         ),
       ),
     );

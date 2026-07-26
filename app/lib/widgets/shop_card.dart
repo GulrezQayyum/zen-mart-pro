@@ -3,39 +3,55 @@ import 'package:flutter/material.dart';
 class ShopCard extends StatelessWidget {
   final String shopName;
   final double rating;
+  final VoidCallback onTap; // ✅ REQUIRED
 
   const ShopCard({
     Key? key,
     required this.shopName,
     required this.rating,
+    required this.onTap,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(right: 12),
+    return GestureDetector(
+      onTap: onTap,
       child: Container(
-        width: 150,
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.store, size: 40),
-            const SizedBox(height: 8),
-            Text(
-              shopName,
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 4),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+        width: 140,
+        margin: const EdgeInsets.only(right: 12),
+        child: Card(
+          clipBehavior: Clip.antiAlias,
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.star, size: 14, color: Colors.amber),
-                Text(' $rating'),
+                Container(
+                  height: 70,
+                  color: Colors.grey.shade200,
+                  child: const Center(
+                    child: Icon(Icons.store, size: 36, color: Colors.grey),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  shopName,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    const Icon(Icons.star, size: 16, color: Colors.amber),
+                    const SizedBox(width: 4),
+                    Text(rating.toStringAsFixed(1),
+                        style: const TextStyle(fontSize: 12)),
+                  ],
+                ),
               ],
             ),
-          ],
+          ),
         ),
       ),
     );
