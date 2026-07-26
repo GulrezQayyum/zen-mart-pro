@@ -11,7 +11,6 @@ class VendorDashboardScreen extends ConsumerStatefulWidget {
 }
 
 class _VendorDashboardScreenState extends ConsumerState<VendorDashboardScreen> {
-  int _selectedIndex = 0;
 
   @override
   Widget build(BuildContext context) {

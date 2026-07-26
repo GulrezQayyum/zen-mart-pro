@@ -1,5 +1,5 @@
 import firebase_admin
-from firebase_admin import credentials, auth, db
+from firebase_admin import credentials, auth, firestore  
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
@@ -8,14 +8,12 @@ import os
 # Load environment variables
 load_dotenv()
 
-# Initialize Firebase (replace with your credentials)
-# Download your service account key from Firebase Console
-# Project Settings -> Service Accounts -> Generate New Private Key
+# Initialize Firebase (with only credentials – no databaseURL for Firestore)
 try:
     cred = credentials.Certificate("firebase-key.json")
-    firebase_admin.initialize_app(cred, {
-        'databaseURL': os.getenv('FIREBASE_DATABASE_URL', 'https://your-project.firebaseio.com')
-    })
+    firebase_admin.initialize_app(cred)  # ✅ removed databaseURL
+    db = firestore.client()  # ✅ create Firestore client
+    print("Firestore initialized successfully")
 except Exception as e:
     print(f"Firebase initialization error: {e}")
     print("Make sure firebase-key.json is in the project root")

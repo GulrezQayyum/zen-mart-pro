@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_providers.dart';
 import '../models/user_model.dart';
 import 'auth/login_screen.dart';
-import 'auth/signup_screen.dart';
 import 'admin/admin_dashboard_screen.dart';
 import 'vendor/vendor_dashboard_screen.dart';
 import 'common/home_screen.dart';

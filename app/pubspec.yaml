@@ -12,9 +12,9 @@ dependencies:
     sdk: flutter
 
   # Firebase
-  firebase_core: ^2.24.0
-  firebase_auth: ^4.16.0
-  cloud_firestore: ^4.14.0
+  firebase_core: ^3.1.1
+  firebase_auth: ^5.1.1
+  cloud_firestore: ^5.0.2
 
   # State management
   riverpod: ^2.4.0
@@ -31,8 +31,6 @@ dependencies:
   fl_chart: ^0.64.0
   intl: ^0.19.0
 
-dependency_overrides:
-  js: ^0.7.0
 dev_dependencies:
   flutter_test:
     sdk: flutter
