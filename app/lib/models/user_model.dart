@@ -1,26 +1,12 @@
-enum UserRole {
-  admin,
-  vendor,
-  user,
-  rider,
-}
+// lib/models/user_model.dart
+import 'package:cloud_firestore/cloud_firestore.dart';
+
+enum UserRole { admin, vendor, user, rider }
 
 extension UserRoleExtension on UserRole {
-  String get value {
-    switch (this) {
-      case UserRole.admin:
-        return 'admin';
-      case UserRole.vendor:
-        return 'vendor';
-      case UserRole.user:
-        return 'user';
-      case UserRole.rider:
-        return 'rider';
-    }
-  }
-
-  static UserRole fromString(String value) {
-    switch (value.toLowerCase()) {
+  String get value => name;
+  static UserRole fromString(String role) {
+    switch (role.toLowerCase()) {
       case 'admin':
         return UserRole.admin;
       case 'vendor':
@@ -34,77 +20,89 @@ extension UserRoleExtension on UserRole {
 }
 
 class AppUser {
-  final String uid;
+  final String id;
   final String email;
   final String displayName;
-  final UserRole role;
-  final String? photoURL;
-  final DateTime createdAt;
-  final String status;
+  final String? phone;
   final String? shopId;
+  final String? riderId;
+  final String? photoURL;
+  final String? status;
+  final UserRole role;
+  final DateTime? createdAt;
 
   AppUser({
-    required this.uid,
+    required this.id,
     required this.email,
     required this.displayName,
-    required this.role,
-    this.photoURL,
-    required this.createdAt,
-    this.status = 'active',
+    this.phone,
     this.shopId,
+    this.riderId,
+    this.photoURL,
+    this.status,
+    this.role = UserRole.user,
+    this.createdAt,
   });
 
-  AppUser copyWith({
-    String? uid,
-    String? email,
-    String? displayName,
-    UserRole? role,
-    String? photoURL,
-    DateTime? createdAt,
-    String? status,
-    String? shopId,
-  }) {
-    return AppUser(
-      uid: uid ?? this.uid,
-      email: email ?? this.email,
-      displayName: displayName ?? this.displayName,
-      role: role ?? this.role,
-      photoURL: photoURL ?? this.photoURL,
-      createdAt: createdAt ?? this.createdAt,
-      status: status ?? this.status,
-      shopId: shopId ?? this.shopId,
-    );
-  }
+  // ✅ Corrected fromFirestore
+  factory AppUser.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
 
-  Map<String, dynamic> toJson() {
-    return {
-      'uid': uid,
-      'email': email,
-      'displayName': displayName,
-      'role': role.value,
-      'photoURL': photoURL,
-      'createdAt': createdAt.toIso8601String(),
-      'status': status,
-      'shopId': shopId,
-    };
+    DateTime? createdAt;
+    final createdAtField = data['createdAt'];
+    if (createdAtField is Timestamp) {
+      createdAt = createdAtField.toDate();
+    } else if (createdAtField is String) {
+      try {
+        createdAt = DateTime.parse(createdAtField);
+      } catch (_) {
+        createdAt = null;
+      }
+    }
+
+    return AppUser(
+      id: doc.id,
+      email: data['email'] ?? '',
+      displayName: data['displayName'] ?? '',
+      phone: data['phone'],
+      shopId: data['shopId'],
+      riderId: data['riderId'],
+      photoURL: data['photoURL'],
+      status: data['status'] ?? 'active',
+      role: UserRoleExtension.fromString(data['role'] ?? 'user'),
+      createdAt: createdAt,
+    );
   }
 
   factory AppUser.fromJson(Map<String, dynamic> json) {
     return AppUser(
-      uid: json['uid'] ?? '',
+      id: json['uid'] ?? json['id'] ?? '',
       email: json['email'] ?? '',
       displayName: json['displayName'] ?? '',
-      role: UserRoleExtension.fromString(json['role'] ?? 'user'),
       photoURL: json['photoURL'],
-      createdAt: json['createdAt'] is String
-          ? DateTime.parse(json['createdAt'])
-          : DateTime.now(),
       status: json['status'] ?? 'active',
       shopId: json['shopId'],
+      role: UserRoleExtension.fromString(json['role'] ?? 'user'),
+      createdAt: json['createdAt'] != null
+          ? DateTime.parse(json['createdAt'])
+          : null,
     );
   }
+
+  Map<String, dynamic> toJson() => {
+    'email': email,
+    'displayName': displayName,
+    'phone': phone,
+    'shopId': shopId,
+    'riderId': riderId,
+    'photoURL': photoURL,
+    'status': status ?? 'active',
+    'role': role.value,
+    'createdAt': FieldValue.serverTimestamp(),
+  };
 }
 
+// SignUpRequest (keep if used)
 class SignUpRequest {
   final String email;
   final String password;
@@ -118,32 +116,25 @@ class SignUpRequest {
     this.role = UserRole.user,
   });
 
-  Map<String, dynamic> toJson() {
-    return {
-      'email': email,
-      'password': password,
-      'displayName': displayName,
-      'role': role.value,
-    };
-  }
+  Map<String, dynamic> toJson() => {
+    'email': email,
+    'password': password,
+    'displayName': displayName,
+    'role': role.value,
+  };
 }
 
+// DashboardStats (keep if used)
 class DashboardStats {
   final int totalUsers;
   final int totalVendors;
   final bool activeSession;
 
-  DashboardStats({
-    required this.totalUsers,
-    required this.totalVendors,
-    required this.activeSession,
-  });
+  DashboardStats({required this.totalUsers, required this.totalVendors, required this.activeSession});
 
-  factory DashboardStats.fromJson(Map<String, dynamic> json) {
-    return DashboardStats(
-      totalUsers: json['totalUsers'] ?? 0,
-      totalVendors: json['totalVendors'] ?? 0,
-      activeSession: json['activeSession'] ?? true,
-    );
-  }
+  factory DashboardStats.fromJson(Map<String, dynamic> json) => DashboardStats(
+    totalUsers: json['totalUsers'] ?? 0,
+    totalVendors: json['totalVendors'] ?? 0,
+    activeSession: json['activeSession'] ?? true,
+  );
 }

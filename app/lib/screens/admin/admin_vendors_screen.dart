@@ -1,6 +1,6 @@
-// lib/screens/admin/admin_vendors_screen.dart
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class AdminVendorsScreen extends StatelessWidget {
   const AdminVendorsScreen({Key? key}) : super(key: key);
@@ -8,7 +8,7 @@ class AdminVendorsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Vendors')),
+      appBar: null, // Use parent's AppBar
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
             .collection('users')
@@ -46,9 +46,14 @@ class AdminVendorsScreen extends StatelessWidget {
           );
         },
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _showCreateVendorDialog(context),
+        child: const Icon(Icons.add),
+      ),
     );
   }
 
+  // ----- Dialog: Assign existing shop to vendor -----
   void _showAssignShopDialog(BuildContext context, String vendorId) {
     showDialog(
       context: context,
@@ -78,7 +83,6 @@ class AdminVendorsScreen extends StatelessWidget {
                         .collection('shops')
                         .doc(doc.id)
                         .update({'vendorId': vendorId});
-                    // Also update vendor's shopId
                     await FirebaseFirestore.instance
                         .collection('users')
                         .doc(vendorId)
@@ -92,6 +96,103 @@ class AdminVendorsScreen extends StatelessWidget {
             );
           },
         ),
+      ),
+    );
+  }
+
+  // lib/screens/admin/admin_vendors_screen.dart
+// Add these imports at the top:
+// import 'package:firebase_auth/firebase_auth.dart';
+// import 'package:cloud_firestore/cloud_firestore.dart';
+
+  void _showCreateVendorDialog(BuildContext context) {
+    final _formKey = GlobalKey<FormState>();
+    final _nameController = TextEditingController();
+    final _emailController = TextEditingController();
+    final _passwordController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Create Vendor'),
+        content: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                controller: _nameController,
+                decoration: const InputDecoration(labelText: 'Display Name'),
+                validator: (v) => v!.isEmpty ? 'Required' : null,
+              ),
+              TextFormField(
+                controller: _emailController,
+                decoration: const InputDecoration(labelText: 'Email'),
+                validator: (v) => v!.isEmpty || !v.contains('@')
+                    ? 'Valid email required'
+                    : null,
+              ),
+              TextFormField(
+                controller: _passwordController,
+                decoration: const InputDecoration(labelText: 'Password'),
+                obscureText: true,
+                validator: (v) => v!.length < 6 ? 'Min 6 characters' : null,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (_formKey.currentState!.validate()) {
+                try {
+                  // 1. Create Auth user
+                  final authResult = await FirebaseAuth.instance
+                      .createUserWithEmailAndPassword(
+                    email: _emailController.text.trim(),
+                    password: _passwordController.text.trim(),
+                  );
+                  final uid = authResult.user!.uid;
+
+                  // 2. Save Firestore doc with UID as ID
+                  await FirebaseFirestore.instance
+                      .collection('users')
+                      .doc(uid)
+                      .set({
+                    'displayName': _nameController.text.trim(),
+                    'email': _emailController.text.trim(),
+                    'role': 'vendor',
+                    'shopId': null,
+                    'createdAt': FieldValue.serverTimestamp(),
+                  });
+
+                  // ✅ Use context.mounted instead of mounted
+                  if (!context.mounted) return;
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                        content: Text('Vendor created successfully')),
+                  );
+                } on FirebaseAuthException catch (e) {
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Auth error: ${e.message}')),
+                  );
+                } catch (e) {
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error: $e')),
+                  );
+                }
+              }
+            },
+            child: const Text('Create'),
+          ),
+        ],
       ),
     );
   }

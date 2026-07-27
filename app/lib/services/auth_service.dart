@@ -30,7 +30,7 @@ class AuthService {
 
       // Create user document in Firestore
       final appUser = AppUser(
-        uid: userCredential.user!.uid,
+        id: userCredential.user!.uid,
         email: email,
         displayName: displayName,
         role: role,
@@ -38,7 +38,7 @@ class AuthService {
         status: 'active',
       );
 
-      await _firestore.collection('users').doc(appUser.uid).set(appUser.toJson());
+      await _firestore.collection('users').doc(appUser.id).set(appUser.toJson());
 
       return appUser;
     } on FirebaseAuthException catch (e) {

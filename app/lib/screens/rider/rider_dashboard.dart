@@ -1,3 +1,4 @@
+// lib/screens/rider/rider_dashboard.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -21,12 +22,12 @@ class RiderDashboard extends ConsumerStatefulWidget {
 class _RiderDashboardState extends ConsumerState<RiderDashboard> {
   int _selectedIndex = 0;
 
-  final List<Widget> _pages = [
-    const _RiderHomeBody(),
-    const AvailableDeliveriesScreen(),
-    const ActiveDeliveriesScreen(),
-    const DeliveryHistoryScreen(),
-    const RiderEarningsScreen(),
+  final List<Widget> _pages = const [
+    _RiderHomeBody(),
+    AvailableDeliveriesScreen(),
+    ActiveDeliveriesScreen(),
+    DeliveryHistoryScreen(),
+    RiderEarningsScreen(),
   ];
 
   @override
@@ -41,7 +42,6 @@ class _RiderDashboardState extends ConsumerState<RiderDashboard> {
               child: Text('⚡ Zenvyro', style: TextStyle(fontSize: 12, color: Colors.white70)),
             ),
           ),
-          // Logout button added inside pages to avoid duplication
         ],
       ),
       body: _pages[_selectedIndex],
@@ -184,12 +184,14 @@ class _RiderHomeBody extends ConsumerWidget {
                 return Column(
                   children: orders.map((doc) {
                     final data = doc.data() as Map<String, dynamic>;
+                    // 🔥 Rider earns riderAmount (or deliveryFee)
+                    final riderAmount = (data['riderAmount'] ?? data['deliveryFee'] ?? 0).toDouble();
                     return DeliveryCard(
                       orderId: doc.id,
-                      from: data['shopId'] ?? 'Shop', // you can fetch shop name separately
+                      from: data['shopId'] ?? 'Shop',
                       to: data['deliveryAddress'] ?? 'Address',
-                      amount: data['total']?.toString() ?? '0',
-                      distance: '3.2 km', // placeholder
+                      amount: riderAmount.toStringAsFixed(0), // only what rider earns
+                      distance: '3.2 km', // placeholder – can calculate later
                       isActive: data['status'] != 'Delivered',
                       onTap: () {
                         // Navigate to order tracking
@@ -218,7 +220,9 @@ class _RiderHomeBody extends ConsumerWidget {
     final totalDeliveries = completed.docs.length;
     double totalEarnings = 0;
     for (var doc in completed.docs) {
-      totalEarnings += (doc.data()['total'] ?? 0).toDouble();
+      // 🔥 Sum riderAmount (or deliveryFee)
+      final riderAmount = (doc.data()['riderAmount'] ?? doc.data()['deliveryFee'] ?? 0).toDouble();
+      totalEarnings += riderAmount;
     }
     // Placeholder rating – you can add a rating field later
     return {
@@ -254,7 +258,9 @@ class _RiderHomeBody extends ConsumerWidget {
 
     double totalEarnings = 0;
     for (var doc in completed.docs) {
-      totalEarnings += (doc.data()['total'] ?? 0).toDouble();
+      // 🔥 Sum riderAmount
+      final riderAmount = (doc.data()['riderAmount'] ?? doc.data()['deliveryFee'] ?? 0).toDouble();
+      totalEarnings += riderAmount;
     }
 
     return {

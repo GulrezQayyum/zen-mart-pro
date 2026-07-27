@@ -35,6 +35,7 @@ class ProductDetailScreen extends ConsumerWidget {
           final price = (data['price'] ?? 0).toDouble();
           final description = data['description'] ?? 'No description';
           final stock = data['stock'] ?? 0;
+          final shopId = data['shopId'] ?? 'unknown'; // 👈 Get shopId
 
           return Padding(
             padding: const EdgeInsets.all(16),
@@ -68,6 +69,7 @@ class ProductDetailScreen extends ConsumerWidget {
                               productId: productId,
                               name: name,
                               price: price,
+                              shopId: shopId, // 👈 Pass shopId
                             ),
                           );
                       ScaffoldMessenger.of(context).showSnackBar(

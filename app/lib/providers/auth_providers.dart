@@ -1,67 +1,105 @@
+import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import '../models/user_model.dart';
-import '../../services/auth_service.dart';
 
-// Auth service provider
+final firebaseAuthProvider = Provider<firebase_auth.FirebaseAuth>((ref) {
+  return firebase_auth.FirebaseAuth.instance;
+});
+
+final authStateProvider = StreamProvider<firebase_auth.User?>((ref) {
+  final auth = ref.watch(firebaseAuthProvider);
+  return auth.authStateChanges();
+});
+
+// ✅ CORRECT: Uses asyncExpand to listen to Firestore in real-time
+final currentUserProvider = StreamProvider<AppUser?>((ref) {
+  final auth = ref.watch(firebaseAuthProvider);
+  return auth.authStateChanges().asyncExpand((firebaseUser) {
+    if (firebaseUser == null) {
+      print('🔴 No auth user');
+      return Stream.value(null);
+    }
+    print('🟢 Auth UID: ${firebaseUser.uid}');
+    return FirebaseFirestore.instance
+        .collection('users')
+        .doc(firebaseUser.uid)
+        .snapshots()
+        .map((doc) {
+          if (doc.exists) {
+            final user = AppUser.fromFirestore(doc);
+            print('📄 User loaded: ${user.displayName}, shopId: ${user.shopId}');
+            return user;
+          } else {
+            print('⚠️ User document not found for UID: ${firebaseUser.uid}');
+            return null;
+          }
+        });
+  });
+});
+
 final authServiceProvider = Provider<AuthService>((ref) {
-  return AuthService();
+  return AuthService(ref.read(firebaseAuthProvider));
 });
 
-// Firebase auth state stream provider
-final authStateProvider = StreamProvider<User?>((ref) {
-  final authService = ref.watch(authServiceProvider);
-  return authService.authStateChanges;
-});
+class AuthService {
+  final firebase_auth.FirebaseAuth _auth;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  AuthService(this._auth);
 
-// Current user data provider
-final currentUserProvider = FutureProvider<AppUser?>((ref) async {
-  final authService = ref.watch(authServiceProvider);
-  return authService.getCurrentUserData();
-});
+  Future<void> signIn({required String email, required String password}) async {
+    try {
+      await _auth.signInWithEmailAndPassword(email: email.trim(), password: password);
+    } on firebase_auth.FirebaseAuthException catch (e) {
+      throw _handleAuthException(e);
+    }
+  }
 
-// User role stream provider
-final userRoleProvider = StreamProvider.family<UserRole?, String>((ref, uid) {
-  final authService = ref.watch(authServiceProvider);
-  return authService.getUserRoleStream(uid);
-});
+  Future<void> signUp({
+    required String email,
+    required String password,
+    required String displayName,
+    UserRole role = UserRole.user,
+  }) async {
+    try {
+      final authResult = await _auth.createUserWithEmailAndPassword(
+        email: email.trim(),
+        password: password,
+      );
+      final uid = authResult.user!.uid;
+      await _firestore.collection('users').doc(uid).set({
+        'email': email.trim(),
+        'displayName': displayName.trim(),
+        'role': role.name,
+        'shopId': null,
+        'riderId': null,
+        'status': 'active',
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    } on firebase_auth.FirebaseAuthException catch (e) {
+      throw _handleAuthException(e);
+    }
+  }
 
-// Sign up provider
-final signUpProvider = FutureProvider.family<AppUser?, SignUpRequest>((ref, request) async {
-  final authService = ref.watch(authServiceProvider);
-  final user = await authService.signUp(
-    email: request.email,
-    password: request.password,
-    displayName: request.displayName,
-    role: request.role,
-  );
-  return user;
-});
+  Future<void> resetPassword({required String email}) async {
+    try {
+      await _auth.sendPasswordResetEmail(email: email.trim());
+    } on firebase_auth.FirebaseAuthException catch (e) {
+      throw _handleAuthException(e);
+    }
+  }
 
-// Sign in provider
-final signInProvider = FutureProvider.family<AppUser?, Map<String, String>>((ref, credentials) async {
-  final authService = ref.watch(authServiceProvider);
-  final user = await authService.signIn(
-    email: credentials['email']!,
-    password: credentials['password']!,
-  );
-  return user;
-});
+  Future<void> signOut() async => await _auth.signOut();
 
-// Admin check provider
-final isAdminProvider = FutureProvider.family<bool, String>((ref, uid) async {
-  final authService = ref.watch(authServiceProvider);
-  return authService.isUserAdmin(uid);
-});
-
-// Vendor check provider
-final isVendorProvider = FutureProvider.family<bool, String>((ref, uid) async {
-  final authService = ref.watch(authServiceProvider);
-  return authService.isUserVendor(uid);
-});
-
-// Sign out notifier
-final signOutProvider = FutureProvider<void>((ref) async {
-  final authService = ref.watch(authServiceProvider);
-  await authService.signOut();
-});
+  String _handleAuthException(firebase_auth.FirebaseAuthException e) {
+    switch (e.code) {
+      case 'user-not-found': return 'No user found with this email.';
+      case 'wrong-password': return 'Incorrect password.';
+      case 'email-already-in-use': return 'Email already registered.';
+      case 'invalid-email': return 'Invalid email address.';
+      case 'weak-password': return 'Password too weak.';
+      case 'network-request-failed': return 'Network error. Check connection.';
+      default: return 'Auth error: ${e.message}';
+    }
+  }
+}

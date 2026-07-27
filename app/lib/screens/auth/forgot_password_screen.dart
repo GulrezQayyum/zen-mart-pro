@@ -45,7 +45,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
     try {
       // 2. Call Riverpod Auth Provider
       final authService = ref.read(authServiceProvider);
-      await authService.resetPassword(email);
+      await authService.resetPassword(email: email);
 
       if (mounted) {
         _showSnackBar('Password reset link sent to your email', Colors.green);

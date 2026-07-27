@@ -101,7 +101,6 @@ class _VendorDashboardScreenState extends ConsumerState<VendorDashboardScreen>
               ),
             );
           }
-          // Pass shopId to tabs
           return TabBarView(
             controller: _tabController,
             children: [
@@ -248,10 +247,15 @@ class _DashboardTabState extends ConsumerState<_DashboardTab> {
               return Column(
                 children: docs.map((doc) {
                   final data = doc.data() as Map<String, dynamic>;
+                  final subtotal = (data['subtotal'] ?? data['total'] ?? 0).toDouble();
+                  final deliveryFee = (data['deliveryFee'] ?? 0).toDouble();
+                  final total = (data['total'] ?? 0).toDouble();
                   return OrderTile(
                     orderId: doc.id,
                     customerName: data['customerId'] ?? 'Customer',
-                    total: data['total']?.toString() ?? '0',
+                    subtotal: subtotal.toStringAsFixed(0),
+                    deliveryFee: deliveryFee.toStringAsFixed(0),
+                    total: total.toStringAsFixed(0),
                     status: data['status'] ?? 'Pending',
                     onTap: () {
                       // TODO: Navigate to order detail
@@ -266,6 +270,7 @@ class _DashboardTabState extends ConsumerState<_DashboardTab> {
     );
   }
 
+  // 🔥 FIXED: Revenue uses vendorAmount or subtotal (not total)
   Future<Map<String, dynamic>> _getStats(String shopId) async {
     final products = await FirebaseFirestore.instance
         .collection('products')
@@ -282,7 +287,9 @@ class _DashboardTabState extends ConsumerState<_DashboardTab> {
     double revenue = 0;
     for (var doc in orders.docs) {
       if (doc.data()['status'] == 'Delivered') {
-        revenue += (doc.data()['total'] ?? 0).toDouble();
+        // Use vendorAmount if exists, else fallback to subtotal
+        final vendorAmount = (doc.data()['vendorAmount'] ?? doc.data()['subtotal'] ?? 0).toDouble();
+        revenue += vendorAmount;
       }
     }
     return {
@@ -295,7 +302,7 @@ class _DashboardTabState extends ConsumerState<_DashboardTab> {
 }
 
 // =============================================
-//  PRODUCTS TAB
+//  PRODUCTS TAB (unchanged)
 // =============================================
 class _ProductsTab extends ConsumerStatefulWidget {
   final String shopId;
@@ -363,7 +370,6 @@ class _ProductsTabState extends ConsumerState<_ProductsTab> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // Add Product Form (collapsible)
         Card(
           margin: const EdgeInsets.all(16),
           child: Padding(
@@ -408,7 +414,6 @@ class _ProductsTabState extends ConsumerState<_ProductsTab> {
             ),
           ),
         ),
-        // Product List
         Expanded(
           child: StreamBuilder<QuerySnapshot>(
             stream: FirebaseFirestore.instance
@@ -545,10 +550,15 @@ class _OrdersTabState extends ConsumerState<_OrdersTab> {
                 itemBuilder: (context, index) {
                   final doc = docs[index];
                   final data = doc.data() as Map<String, dynamic>;
+                  final subtotal = (data['subtotal'] ?? data['total'] ?? 0).toDouble();
+                  final deliveryFee = (data['deliveryFee'] ?? 0).toDouble();
+                  final total = (data['total'] ?? 0).toDouble();
                   return OrderTile(
                     orderId: doc.id,
                     customerName: data['customerId'] ?? 'Customer',
-                    total: data['total']?.toString() ?? '0',
+                    subtotal: subtotal.toStringAsFixed(0),
+                    deliveryFee: deliveryFee.toStringAsFixed(0),
+                    total: total.toStringAsFixed(0),
                     status: data['status'] ?? 'Pending',
                     onTap: () => _showOrderActions(
                         context, doc.id, data['status'] ?? 'Pending'),
@@ -664,7 +674,7 @@ class _OrdersTabState extends ConsumerState<_OrdersTab> {
 }
 
 // =============================================
-//  REUSABLE WIDGETS (move to separate files later)
+//  REUSABLE WIDGETS (UPDATED OrderTile)
 // =============================================
 class StatCard extends StatelessWidget {
   final String title;
@@ -703,9 +713,12 @@ class StatCard extends StatelessWidget {
   }
 }
 
+// ✅ UPDATED OrderTile – shows subtotal, deliveryFee, total
 class OrderTile extends StatelessWidget {
   final String orderId;
   final String customerName;
+  final String subtotal;
+  final String deliveryFee;
   final String total;
   final String status;
   final VoidCallback? onTap;
@@ -715,6 +728,8 @@ class OrderTile extends StatelessWidget {
     Key? key,
     required this.orderId,
     required this.customerName,
+    required this.subtotal,
+    required this.deliveryFee,
     required this.total,
     required this.status,
     this.onTap,
@@ -728,7 +743,14 @@ class OrderTile extends StatelessWidget {
       child: ListTile(
         onTap: onTap,
         title: Text('$orderId - $customerName'),
-        subtitle: Text('Total: Rs. $total'),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Total: Rs. $total'),
+            Text('Subtotal: Rs. $subtotal  |  Delivery: Rs. $deliveryFee',
+                style: const TextStyle(fontSize: 12, color: Colors.grey)),
+          ],
+        ),
         trailing: trailing ??
             Chip(
               label: Text(

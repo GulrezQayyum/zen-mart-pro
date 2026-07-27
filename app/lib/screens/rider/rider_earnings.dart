@@ -1,7 +1,7 @@
+// lib/screens/rider/rider_earnings.dart
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../../widgets/stat_card.dart';
 
 class RiderEarningsScreen extends StatelessWidget {
   const RiderEarningsScreen({Key? key}) : super(key: key);
@@ -16,7 +16,9 @@ class RiderEarningsScreen extends StatelessWidget {
         actions: const [
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 8.0),
-            child: Center(child: Text('⚡ Zenvyro', style: TextStyle(fontSize: 12, color: Colors.white70))),
+            child: Center(
+              child: Text('⚡ Zenvyro', style: TextStyle(fontSize: 12, color: Colors.white70)),
+            ),
           ),
         ],
       ),
@@ -44,7 +46,11 @@ class RiderEarningsScreen extends StatelessWidget {
                         const SizedBox(height: 8),
                         Text(
                           'Rs. ${earnings.toStringAsFixed(0)}',
-                          style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.blue),
+                          style: const TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.blue,
+                          ),
                         ),
                       ],
                     ),
@@ -88,11 +94,16 @@ class RiderEarningsScreen extends StatelessWidget {
                       itemCount: orders.length,
                       itemBuilder: (context, index) {
                         final data = orders[index].data() as Map<String, dynamic>;
+                        // 🔥 Rider earns riderAmount (or deliveryFee)
+                        final riderEarning = (data['riderAmount'] ?? data['deliveryFee'] ?? 0).toDouble();
                         return ListTile(
                           leading: const Icon(Icons.check_circle, color: Colors.green),
-                          title: Text('Order ${orders[index].id}'),
+                          title: Text('Order ${orders[index].id.substring(0, 8)}'),
                           subtitle: Text(data['deliveryAddress'] ?? ''),
-                          trailing: Text('Rs. ${data['total'] ?? 0}'),
+                          trailing: Text(
+                            'Rs. ${riderEarning.toStringAsFixed(0)}',
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
                         );
                       },
                     );
@@ -106,6 +117,7 @@ class RiderEarningsScreen extends StatelessWidget {
     );
   }
 
+  // 🔥 FIX: Only sum riderAmount (or deliveryFee)
   Future<double> _getEarnings(String? riderId) async {
     if (riderId == null) return 0.0;
     final query = await FirebaseFirestore.instance
@@ -115,7 +127,10 @@ class RiderEarningsScreen extends StatelessWidget {
         .get();
     double total = 0;
     for (var doc in query.docs) {
-      total += (doc.data()['total'] ?? 0).toDouble();
+      final data = doc.data() as Map<String, dynamic>;
+      // Use riderAmount, fallback to deliveryFee
+      final riderEarning = (data['riderAmount'] ?? data['deliveryFee'] ?? 0).toDouble();
+      total += riderEarning;
     }
     return total;
   }

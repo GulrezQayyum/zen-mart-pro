@@ -7,6 +7,7 @@ class CartItem {
   final double price;
   final int quantity;
   final String imageUrl;
+  final String shopId;
 
   CartItem({
     required this.productId,
@@ -14,6 +15,7 @@ class CartItem {
     required this.price,
     this.quantity = 1,
     this.imageUrl = '',
+    required this.shopId,
   });
 
   CartItem copyWith({int? quantity}) {
@@ -23,6 +25,7 @@ class CartItem {
       price: price,
       quantity: quantity ?? this.quantity,
       imageUrl: imageUrl,
+      shopId: shopId,
     );
   }
 }

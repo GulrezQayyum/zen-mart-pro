@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart'; // 1. Use Riverpod
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'firebase_options.dart';
-import 'services/fcm_service.dart';
-import 'screens/auth_gate.dart'; // Ensure path matches your file structure
+// import 'services/fcm_service.dart';
+import 'screens/auth_gate.dart';
+import 'screens/splash_screen_animated.dart'; // 👈 your animated splash
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -14,10 +15,9 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // Initialize FCM
+  // Initialize FCM (optional)
   // await FCMService().initializeFCM();
 
-  // Wrap app in ProviderScope for Riverpod
   runApp(
     const ProviderScope(
       child: MyApp(),
@@ -43,7 +43,8 @@ class MyApp extends StatelessWidget {
           centerTitle: true,
         ),
       ),
-      home: const AuthGate(),
+      // 👇 Set splash screen as the home
+      home: const SplashScreenAnimated(),
     );
   }
 }
