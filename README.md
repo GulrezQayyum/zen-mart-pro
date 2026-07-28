@@ -1,4 +1,4 @@
-🛍️ Zen Mart Pro – Multi‑Vendor E‑Commerce & Delivery Platform
+## 🛍️ Zen Mart Pro – Multi‑Vendor E‑Commerce & Delivery Platform
 
 Zen Mart Pro is a full‑stack, multi‑role mobile application built with Flutter for the frontend and Python (Flask) + Firebase for the backend.  
 It serves four distinct user types – Admin, Vendor, Rider, and Customer – each with tailored dashboards and workflows.  
