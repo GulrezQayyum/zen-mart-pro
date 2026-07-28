@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../providers/auth_providers.dart';
 import '../../widgets/admin_drawer.dart';
+import '../../widgets/zen_mart_buttons.dart'; // ✅ ADD THIS
 import 'admin_vendors_screen.dart';
 import 'admin_shops_screen.dart';
 import 'admin_orders_screen.dart';
@@ -36,14 +37,17 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Admin Panel'),
-        actions: const [
+      // ✅ FIXED: Use ZenMartAppBar instead of default AppBar
+      appBar: ZenMartAppBar(
+        title: 'Admin Panel',
+        actions: [
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: 8.0),
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Center(
-              child: Text('⚡ Zenvyro',
-                  style: TextStyle(fontSize: 12, color: Colors.white70)),
+              child: Text(
+                'Zenvyro',
+                style: Theme.of(context).appBarTheme.titleTextStyle,
+              ),
             ),
           ),
         ],
@@ -52,7 +56,11 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
         currentIndex: _selectedIndex,
         onItemSelected: (index) => setState(() => _selectedIndex = index),
       ),
-      body: _pages[_selectedIndex],
+      body: Container(
+        // ✅ Use theme background color
+        color: ZenMartColors.darkBg,
+        child: _pages[_selectedIndex],
+      ),
     );
   }
 }
@@ -75,78 +83,108 @@ class _DashboardHomeState extends ConsumerState<_DashboardHome> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Admin Info Card
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  currentUserAsync.when(
-                    data: (user) => Text(
-                      'Welcome, ${user?.displayName ?? 'Super Admin'}!',
-                      style: const TextStyle(
-                          fontSize: 20, fontWeight: FontWeight.bold),
-                    ),
-                    loading: () => const Text('Welcome, Super Admin!'),
-                    error: (_, __) => const Text('Welcome, Super Admin!'),
-                  ),
-                  const SizedBox(height: 8),
-                  currentUserAsync.when(
-                    data: (user) => Text(
-                      user?.email ?? '',
-                      style: const TextStyle(color: Colors.grey),
-                    ),
-                    loading: () => const CircularProgressIndicator(),
-                    error: (_, __) => const Text('Error loading profile'),
-                  ),
-                ],
+          // ✅ FIXED: Admin Info Card with proper styling
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: ZenMartColors.darkBgSecondary,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: ZenMartColors.tealAccent.withOpacity(0.3),
               ),
             ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                currentUserAsync.when(
+                  data: (user) => Text(
+                    'Welcome, ${user?.displayName ?? 'Super Admin'}!',
+                    style: Theme.of(context).textTheme.displayMedium,
+                  ),
+                  loading: () => Text(
+                    'Welcome, Super Admin!',
+                    style: Theme.of(context).textTheme.displayMedium,
+                  ),
+                  error: (_, __) => Text(
+                    'Welcome, Super Admin!',
+                    style: Theme.of(context).textTheme.displayMedium,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                currentUserAsync.when(
+                  data: (user) => Text(
+                    user?.email ?? 'admin@zenmartpro.com',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                  loading: () => const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                  error: (_, __) => Text(
+                    'admin@zenmartpro.com',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 32),
 
           // Quick Stats - real counts
-          const Text('Quick Stats',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          Text(
+            'Quick Stats',
+            style: Theme.of(context).textTheme.displayMedium,
+          ),
           const SizedBox(height: 16),
-          FutureBuilder(
+          FutureBuilder<Map<String, int>>(
             future: _getStats(),
             builder: (context, snapshot) {
               if (!snapshot.hasData) {
-                return const Center(child: CircularProgressIndicator());
+                return const Center(
+                  child: CircularProgressIndicator(),
+                );
               }
               final stats = snapshot.data!;
               return GridView.count(
                 crossAxisCount: 2,
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                childAspectRatio: 1.4,
+                mainAxisSpacing: 16,
+                crossAxisSpacing: 16,
+                childAspectRatio: 1.5,
                 children: [
-                  StatCard(
-                      title: 'Total Vendors',
-                      value: stats['vendors'].toString(),
-                      icon: Icons.store),
-                  StatCard(
-                      title: 'Total Shops',
-                      value: stats['shops'].toString(),
-                      icon: Icons.shop),
-                  StatCard(
-                      title: 'Total Orders',
-                      value: stats['orders'].toString(),
-                      icon: Icons.shopping_bag),
-                  StatCard(
-                      title: 'Total Riders',
-                      value: stats['riders'].toString(),
-                      icon: Icons.two_wheeler),
+                  _buildStatCard(
+                    title: 'Total Vendors',
+                    value: stats['vendors'].toString(),
+                    icon: Icons.store,
+                  ),
+                  _buildStatCard(
+                    title: 'Total Shops',
+                    value: stats['shops'].toString(),
+                    icon: Icons.shop,
+                  ),
+                  _buildStatCard(
+                    title: 'Total Orders',
+                    value: stats['orders'].toString(),
+                    icon: Icons.shopping_bag,
+                  ),
+                  _buildStatCard(
+                    title: 'Total Riders',
+                    value: stats['riders'].toString(),
+                    icon: Icons.two_wheeler,
+                  ),
                 ],
               );
             },
           ),
           const SizedBox(height: 32),
 
-          // Recent Activity (optional)
-          const Text('Recent Orders',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          // Recent Activity
+          Text(
+            'Recent Orders',
+            style: Theme.of(context).textTheme.displayMedium,
+          ),
           const SizedBox(height: 16),
           StreamBuilder<QuerySnapshot>(
             stream: FirebaseFirestore.instance
@@ -155,28 +193,146 @@ class _DashboardHomeState extends ConsumerState<_DashboardHome> {
                 .limit(5)
                 .snapshots(),
             builder: (context, snapshot) {
-              if (snapshot.hasError) return Text('Error: ${snapshot.error}');
+              if (snapshot.hasError) {
+                return Center(child: Text('Error: ${snapshot.error}'));
+              }
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
               }
               final docs = snapshot.data!.docs;
               if (docs.isEmpty) {
-                return const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 20),
-                  child: Text('No orders yet'),
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 20),
+                  child: Center(
+                    child: Text(
+                      'No orders yet',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                  ),
                 );
               }
               return Column(
                 children: docs.map((doc) {
                   final data = doc.data() as Map<String, dynamic>;
-                  return ListTile(
-                    title: Text('Order ${doc.id}'),
-                    subtitle: Text('Status: ${data['status'] ?? 'Pending'}'),
-                    trailing: Text('Rs. ${data['total'] ?? 0}'),
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: ZenMartColors.darkBgSecondary,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: ZenMartColors.tealAccent.withOpacity(0.2),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Order ${doc.id}',
+                              style: const TextStyle(
+                                color: ZenMartColors.white,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Status: ${data['status'] ?? 'Pending'}',
+                              style: TextStyle(
+                                color: ZenMartColors.textMuted,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Text(
+                          'Rs. ${data['total'] ?? 0}',
+                          style: const TextStyle(
+                            color: ZenMartColors.greenAccent,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
                   );
                 }).toList(),
               );
             },
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ✅ FIXED: Improved StatCard builder without overflow
+  Widget _buildStatCard({
+    required String title,
+    required String value,
+    required IconData icon,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: ZenMartColors.darkBgSecondary,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: ZenMartColors.tealAccent.withOpacity(0.3),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: ZenMartColors.tealAccent.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // Icon
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: ZenMartColors.tealAccent.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              icon,
+              color: ZenMartColors.tealAccent,
+              size: 32,
+            ),
+          ),
+          const SizedBox(height: 12),
+          
+          // Value
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w700,
+              color: ZenMartColors.greenAccent,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 8),
+          
+          // Title
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: ZenMartColors.textSecondary,
+            ),
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),

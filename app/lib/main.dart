@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart'; // ✅ Add this import
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
+import 'services/fcm_service.dart';
 import 'firebase_options.dart';
 import 'screens/auth_gate.dart';
 import 'screens/splash_screen_animated.dart';
-import 'widgets/zen_mart_buttons.dart'; // Import your colors
+import 'widgets/zen_mart_buttons.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -13,6 +14,11 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  // ✅ Force sign out on every launch → always show login screen
+  await FirebaseAuth.instance.signOut();
+
+  // await FCMService().initializeFCM();
 
   runApp(
     const ProviderScope(
@@ -41,11 +47,11 @@ class MyApp extends StatelessWidget {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
-      
+
       // Primary & Secondary Colors
       primaryColor: ZenMartColors.tealPrimary,
       scaffoldBackgroundColor: ZenMartColors.darkBg,
-      
+
       // Color Scheme
       colorScheme: ColorScheme.light(
         primary: ZenMartColors.tealPrimary,
@@ -56,7 +62,7 @@ class MyApp extends StatelessWidget {
         onPrimary: ZenMartColors.white,
         onSecondary: ZenMartColors.white,
       ),
-      
+
       // AppBar Theme
       appBarTheme: const AppBarTheme(
         backgroundColor: ZenMartColors.tealPrimary,
@@ -69,7 +75,7 @@ class MyApp extends StatelessWidget {
           color: ZenMartColors.white,
         ),
       ),
-      
+
       // Text Theme
       textTheme: const TextTheme(
         displayLarge: TextStyle(
@@ -93,7 +99,7 @@ class MyApp extends StatelessWidget {
           color: ZenMartColors.textSecondary,
         ),
       ),
-      
+
       // Input Decoration
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
@@ -124,7 +130,7 @@ class MyApp extends StatelessWidget {
           color: ZenMartColors.textMuted,
         ),
       ),
-      
+
       // Elevated Button Theme
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -139,14 +145,14 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-      
+
       // Text Button Theme
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: ZenMartColors.tealAccent,
         ),
       ),
-      
+
       // Floating Action Button
       floatingActionButtonTheme: const FloatingActionButtonThemeData(
         backgroundColor: ZenMartColors.tealPrimary,

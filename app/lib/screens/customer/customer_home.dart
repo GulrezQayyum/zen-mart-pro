@@ -1,4 +1,3 @@
-// lib/screens/customer/customer_home.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -10,6 +9,7 @@ import 'shop_detail_screen.dart';
 import 'product_detail_screen.dart';
 import 'cart_screen.dart';
 import 'profile_screen.dart';
+import 'search_screen.dart'; // still needed for push navigation
 
 class CustomerHome extends ConsumerStatefulWidget {
   const CustomerHome({Key? key}) : super(key: key);
@@ -21,9 +21,9 @@ class CustomerHome extends ConsumerStatefulWidget {
 class _CustomerHomeState extends ConsumerState<CustomerHome> {
   int _selectedIndex = 0;
 
+  // ✅ Only 3 pages: Home, Cart, Profile
   final List<Widget> _pages = [
     const _HomeBody(),
-    const SearchScreenPlaceholder(),
     const CartScreen(),
     const ProfileScreen(),
   ];
@@ -34,16 +34,6 @@ class _CustomerHomeState extends ConsumerState<CustomerHome> {
       appBar: AppBar(
         title: const Text('Zen Mart Pro'),
         actions: [
-          // Zenvyro Labs branding (right side)
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 8.0),
-            child: Center(
-              child: Text(
-                '⚡ Zenvyro',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white70),
-              ),
-            ),
-          ),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () async {
@@ -58,8 +48,9 @@ class _CustomerHomeState extends ConsumerState<CustomerHome> {
         type: BottomNavigationBarType.fixed,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
-          BottomNavigationBarItem(icon: Icon(Icons.shopping_cart), label: 'Cart'),
+          // 🗑️ Removed Search item
+          BottomNavigationBarItem(
+              icon: Icon(Icons.shopping_cart), label: 'Cart'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
         onTap: (index) => setState(() => _selectedIndex = index),
@@ -77,20 +68,51 @@ class _HomeBody extends ConsumerWidget {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const CustomSearchBar(hintText: 'Search shops or products...'),
+          // ✅ Home search bar – pushes SearchScreen when tapped
+          InkWell(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const SearchScreen()),
+              );
+            },
+            child: Container(
+              height: 50,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade200,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: const Row(
+                children: [
+                  Icon(Icons.search, color: Colors.grey),
+                  SizedBox(width: 8),
+                  Text(
+                    'Search shops or products...',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                ],
+              ),
+            ),
+          ),
           const SizedBox(height: 24),
 
-          // Featured Shops
-          const Text('Featured Shops', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          // Featured Shops (unchanged)
+          const Text('Featured Shops',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 12),
           StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance.collection('shops').limit(10).snapshots(),
+            stream: FirebaseFirestore.instance
+                .collection('shops')
+                .limit(10)
+                .snapshots(),
             builder: (context, snapshot) {
               if (snapshot.hasError) return Text('Error: ${snapshot.error}');
               if (snapshot.connectionState == ConnectionState.waiting) {
-                return const SizedBox(height: 140, child: Center(child: CircularProgressIndicator()));
+                return const SizedBox(
+                    height: 140,
+                    child: Center(child: CircularProgressIndicator()));
               }
               final shops = snapshot.data!.docs;
               if (shops.isEmpty) {
@@ -113,7 +135,8 @@ class _HomeBody extends ConsumerWidget {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => ShopDetailScreen(shopId: shops[index].id),
+                            builder: (_) =>
+                                ShopDetailScreen(shopId: shops[index].id),
                           ),
                         );
                       },
@@ -125,11 +148,15 @@ class _HomeBody extends ConsumerWidget {
           ),
           const SizedBox(height: 32),
 
-          // Popular Products
-          const Text('Popular Products', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          // Popular Products (unchanged)
+          const Text('Popular Products',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 12),
           StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance.collection('products').limit(6).snapshots(),
+            stream: FirebaseFirestore.instance
+                .collection('products')
+                .limit(6)
+                .snapshots(),
             builder: (context, snapshot) {
               if (snapshot.hasError) return Text('Error: ${snapshot.error}');
               if (snapshot.connectionState == ConnectionState.waiting) {
@@ -162,7 +189,8 @@ class _HomeBody extends ConsumerWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => ProductDetailScreen(productId: products[index].id),
+                          builder: (_) => ProductDetailScreen(
+                              productId: products[index].id),
                         ),
                       );
                     },
@@ -175,11 +203,4 @@ class _HomeBody extends ConsumerWidget {
       ),
     );
   }
-}
-
-// ========== Search Placeholder ==========
-class SearchScreenPlaceholder extends StatelessWidget {
-  const SearchScreenPlaceholder({Key? key}) : super(key: key);
-  @override
-  Widget build(BuildContext context) => const Center(child: Text('Search Screen (coming soon)'));
 }

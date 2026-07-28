@@ -69,12 +69,6 @@ class _VendorDashboardScreenState extends ConsumerState<VendorDashboardScreen>
         actions: [
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 8.0),
-            child: Center(
-              child: Text(
-                '⚡ Zenvyro',
-                style: TextStyle(fontSize: 12, color: Colors.white70),
-              ),
-            ),
           ),
           IconButton(
             icon: const Icon(Icons.logout),

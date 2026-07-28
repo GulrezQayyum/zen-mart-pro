@@ -1,7 +1,7 @@
-// lib/screens/admin/admin_analytics_screen.dart
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../widgets/stat_card.dart';
+import '../../widgets/daily_earnings_chart.dart';   // ✅ ADD THIS IMPORT
 
 class AdminAnalyticsScreen extends StatelessWidget {
   const AdminAnalyticsScreen({Key? key}) : super(key: key);
@@ -18,16 +18,14 @@ class AdminAnalyticsScreen extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
-                  children: [
-                    const Text('Revenue Overview',
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: const [
+                    Text('Revenue Overview',
                         style:
                             TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 16),
-                    Container(
-                      height: 200,
-                      color: Colors.grey.shade200,
-                      child: const Center(child: Text('Chart (coming soon)')),
-                    ),
+                    SizedBox(height: 16),
+                    // ✅ REPLACED placeholder with actual chart
+                    DailyEarningsChart(),   // no riderId → aggregates all orders
                   ],
                 ),
               ),

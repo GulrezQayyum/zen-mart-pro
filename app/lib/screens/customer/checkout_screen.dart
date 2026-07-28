@@ -1,4 +1,3 @@
-// lib/screens/customer/checkout_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -6,7 +5,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../providers/cart_provider.dart';
 import 'order_tracking_screen.dart';
 
-// ✅ Define delivery fee (later can fetch from Firestore settings)
 const double deliveryFee = 250.0;
 
 class CheckoutScreen extends ConsumerStatefulWidget {
@@ -27,6 +25,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   }
 
   Future<void> _placeOrder() async {
+    // Validate address
     if (_addressController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please enter delivery address')),
@@ -37,14 +36,31 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     setState(() => _isLoading = true);
 
     try {
+      // Get cart data
       final cartItems = ref.read(cartProvider);
-      final subtotal = ref.read(cartProvider.notifier).totalPrice; // product total
-      final total = subtotal + deliveryFee; // include delivery fee
+      if (cartItems.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Your cart is empty')),
+        );
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      // Compute totals
+      final subtotal = cartItems.fold(0.0, (sum, item) => sum + (item.price * item.quantity));
+      final total = subtotal + deliveryFee;
+
       final user = FirebaseAuth.instance.currentUser;
-      if (user == null) return;
+      if (user == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please log in again')),
+        );
+        setState(() => _isLoading = false);
+        return;
+      }
 
       // Get shopId from first item (assumes all items from same shop)
-      final shopId = cartItems.isNotEmpty ? cartItems.first.shopId : 'unknown';
+      final shopId = cartItems.first.shopId; // ✅ CartItem must have shopId
 
       final orderData = {
         'customerId': user.uid,
@@ -59,8 +75,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         'subtotal': subtotal,
         'deliveryFee': deliveryFee,
         'total': total,
-        'vendorAmount': subtotal,      // vendor gets product total
-        'riderAmount': deliveryFee,    // rider gets delivery fee
+        'vendorAmount': subtotal,
+        'riderAmount': deliveryFee,
         'status': 'Pending',
         'deliveryAddress': _addressController.text.trim(),
         'createdAt': FieldValue.serverTimestamp(),
@@ -70,6 +86,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       final docRef = await FirebaseFirestore.instance.collection('orders').add(orderData);
       final orderId = docRef.id;
 
+      // Clear cart
       ref.read(cartProvider.notifier).clearCart();
 
       if (mounted) {
@@ -94,7 +111,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final subtotal = ref.watch(cartProvider.notifier).totalPrice;
+    // ✅ Watch the cart state – UI rebuilds whenever items change
+    final cartItems = ref.watch(cartProvider);
+    final subtotal = cartItems.fold(0.0, (sum, item) => sum + (item.price * item.quantity));
     final total = subtotal + deliveryFee;
 
     return Scaffold(
@@ -141,7 +160,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               trailing: Icon(Icons.check_circle, color: Colors.green),
             ),
 
-            // ✅ Order summary with delivery fee
             const SizedBox(height: 16),
             const Divider(),
             Row(

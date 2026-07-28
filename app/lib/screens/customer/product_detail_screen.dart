@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../providers/cart_provider.dart';
+import '../../models/cart_item.dart';
 
 class ProductDetailScreen extends ConsumerWidget {
   final String productId;

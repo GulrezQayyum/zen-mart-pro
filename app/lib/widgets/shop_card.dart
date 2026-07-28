@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class ShopCard extends StatelessWidget {
   final String shopName;
   final double rating;
-  final VoidCallback onTap; // ✅ REQUIRED
+  final VoidCallback onTap; 
 
   const ShopCard({
     Key? key,

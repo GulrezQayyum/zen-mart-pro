@@ -641,3 +641,36 @@ class _ZenMartAccentButtonState extends State<ZenMartAccentButton>
     );
   }
 }
+
+// ============================================
+// 🎯 ZEN MART APP BAR - Use this everywhere!
+// ============================================
+class ZenMartAppBar extends AppBar {
+  ZenMartAppBar({
+    required String title,
+    Key? key,
+    List<Widget>? actions,
+    bool centerTitle = true,
+    double elevation = 0,
+    PreferredSizeWidget? bottom,
+    VoidCallback? onBackPressed,
+    bool showBackButton = true,
+  }) : super(
+    key: key,
+    title: Text(title),
+    backgroundColor: ZenMartColors.tealPrimary,
+    foregroundColor: ZenMartColors.white,
+    elevation: elevation,
+    centerTitle: centerTitle,
+    actions: actions,
+    bottom: bottom,
+    automaticallyImplyLeading: showBackButton,
+    leading: showBackButton ? null : const SizedBox.shrink(),
+    titleTextStyle: const TextStyle(
+      fontSize: 18,
+      fontWeight: FontWeight.w600,
+      color: ZenMartColors.white,
+      letterSpacing: 0.5,
+    ),
+  );
+}
